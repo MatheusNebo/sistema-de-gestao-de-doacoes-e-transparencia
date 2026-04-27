@@ -1,4 +1,3 @@
-git remote add origin https://github.com/MatheusNebo/sistema-de-gestao-de-doacoes-e-transparencia.git
 ## Informações do Projeto
 
 **Projeto:** Desenvolvimento de Sites Institucionais com um CMS (Content Management System, ou Sistema de Gerenciamento de Conteúdo) Integração de Banco de Dados
