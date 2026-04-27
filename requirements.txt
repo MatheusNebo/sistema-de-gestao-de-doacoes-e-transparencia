@@ -1,0 +1,17 @@
+# Framework Web e Servidor
+fastapi
+uvicorn[standard]
+
+# Banco de Dados (PostgreSQL)
+sqlalchemy
+psycopg2-binary
+alembic          # Para controle de versões e migrações do banco
+
+# Segurança e Autenticação (JWT)
+passlib[bcrypt]  # Para criptografar senhas de administradores
+python-jose[cryptography] # Para gerar e validar tokens de acesso
+python-multipart # Necessário para lidar com formulários de login
+
+# Validação e Variáveis de Ambiente
+python-dotenv    # Para carregar senhas do arquivo .env
+pydantic[email]  # Validação rigorosa de dados (e-mails, documentos)
