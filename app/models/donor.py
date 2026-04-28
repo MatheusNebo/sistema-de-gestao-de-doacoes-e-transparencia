@@ -1,12 +1,14 @@
 from sqlalchemy import Column, Integer, String, DateTime, CheckConstraint
 from datetime import datetime
 from app.database import Base
+from enum import Enum
+from app.enums import DonorType
 
 class Donor(Base):
     __tablename__ = "donor"
 
     donor_id = Column(Integer, primary_key=True)
-    donor_type = Column(String(2), nullable=False)
+    donor_type = Column(Enum(DonorType), nullable=False)
 
     name = Column(String(150))
     cpf = Column(String(14), unique=True)
@@ -17,7 +19,7 @@ class Donor(Base):
     email = Column(String(150))
     phone = Column(String(20))
 
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now)
 
     __table_args__ = (
         CheckConstraint("donor_type IN ('PF','PJ')", name="chk_donor_type"),

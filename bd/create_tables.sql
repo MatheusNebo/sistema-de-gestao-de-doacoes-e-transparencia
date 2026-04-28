@@ -126,6 +126,7 @@ CREATE TABLE beneficiary (
     birth_date DATE,
     address TEXT,
     city VARCHAR(100),
+    telephone VARCHAR(20),
 
     household_size INT,
     family_income NUMERIC(10,2),
