@@ -13,6 +13,7 @@ class Beneficiary(Base):
     birth_date = Column(Date)
     address = Column(Text)
     city = Column(String(100))
+    telephone = Column(String(20))
 
     household_size = Column(Integer)
     family_income = Column(Numeric(10,2))
