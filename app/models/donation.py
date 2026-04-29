@@ -1,7 +1,6 @@
-from sqlalchemy import Column, Integer, Date, String, Numeric, ForeignKey, CheckConstraint
+from sqlalchemy import Column, Integer, Date, String, Numeric, ForeignKey, CheckConstraint, Enum
 from sqlalchemy.orm import relationship
 from app.database import Base
-from enum import Enum
 from app.enums import DonationType
 
 class Donation(Base):

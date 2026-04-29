@@ -1,7 +1,6 @@
-from sqlalchemy import Column, Integer, String, DateTime, CheckConstraint
+from sqlalchemy import Column, Integer, String, DateTime, CheckConstraint, Enum
 from datetime import datetime
 from app.database import Base
-from enum import Enum
 from app.enums import DonorType
 
 class Donor(Base):
