@@ -1,4 +1,3 @@
-git remote add origin https://github.com/MatheusNebo/sistema-de-gestao-de-doacoes-e-transparencia.git
 ## Informações do Projeto
 
 **Projeto:** Desenvolvimento de Sites Institucionais com um CMS (Content Management System, ou Sistema de Gerenciamento de Conteúdo) Integração de Banco de Dados
@@ -32,24 +31,24 @@ O sistema foi projetado para atender às necessidades operacionais de ONGs, ofer
 
 ### Principais funcionalidades do sistema:
 
--Cadastro de doadores
--Registro de pessoas físicas e jurídicas, com validações específicas para cada tipo.
--Gerenciamento de doações
--Controle de entradas financeiras e materiais, vinculadas aos respectivos doadores.
--Controle de estoque
--Monitoramento de produtos, quantidades, lotes e datas de validade.
--Cadastro de beneficiários
--Armazenamento estruturado de informações para atendimento e distribuição.
--Distribuição de itens
--Registro das entregas realizadas aos beneficiários.
--Movimentação de estoque
--Histórico de entradas, saídas, perdas e ajustes operacionais.
--Integração entre camadas do sistema
--Comunicação entre frontend, API e banco de dados para garantir fluxo contínuo de informações.
--Visualização institucional via CMS
--Apresentação do projeto e disponibilização de conteúdos por meio do WordPress.
--Base para análises e relatórios
--Estrutura preparada para consultas analíticas, indicadores e futura expansão para dashboards.
+- Cadastro de doadores
+- Registro de pessoas físicas e jurídicas, com validações específicas para cada tipo.
+- Gerenciamento de doações
+- Controle de entradas financeiras e materiais, vinculadas aos respectivos doadores.
+- Controle de estoque
+- Monitoramento de produtos, quantidades, lotes e datas de validade.
+- Cadastro de beneficiários
+- Armazenamento estruturado de informações para atendimento e distribuição.
+- Distribuição de itens
+- Registro das entregas realizadas aos beneficiários.
+- Movimentação de estoque
+- Histórico de entradas, saídas, perdas e ajustes operacionais.
+- Integração entre camadas do sistema
+- Comunicação entre frontend, API e banco de dados para garantir fluxo contínuo de informações.
+- Visualização institucional via CMS
+- Apresentação do projeto e disponibilização de conteúdos por meio do WordPress.
+- Base para análises e relatórios
+- Estrutura preparada para consultas analíticas, indicadores e futura expansão para dashboards.
 
 ## Tecnologias Utilizadas
 
