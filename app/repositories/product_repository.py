@@ -18,6 +18,7 @@ class ProductRepository:
             Product.product_id == product_id
         ).first()
 
+# abordagem ORM tradicional em entidades de baixa complexidade
     def update(self, db: Session, product_id: int, data):
         product = self.get_by_id(db, product_id)
 
