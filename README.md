@@ -64,3 +64,8 @@ O sistema foi projetado para atender às necessidades operacionais de ONGs, ofer
 
 ![Descrição](Estrutura_sistema.png "Estrutura inicial do projeto")
 
+## Status: 
+
+Em desenvolvimento
+
+
