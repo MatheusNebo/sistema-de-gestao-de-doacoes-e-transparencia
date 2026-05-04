@@ -12,8 +12,9 @@ class Inventory(Base):
 
     batch = Column(String(50))
     expiration_date = Column(Date, nullable=False)
-    entry_date = Column(Date, default=date.today)
+    entry_date = Column(Date, default=date.today, nullable=False)
 
     __table_args__ = (
         CheckConstraint("quantity >= 0", name="chk_inventory_quantity"),
+        CheckConstraint("expiration_date >= entry_date", name="chk_inventory_expiration"),
     )
