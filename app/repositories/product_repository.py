@@ -1,14 +1,21 @@
 from sqlalchemy.orm import Session
 from app.models.product import Product
+from sqlalchemy.exc import SQLAlchemyError
 
 class ProductRepository:
 
     def create(self, db: Session, data):
         product = Product(**data.model_dump())
         db.add(product)
-        db.commit()
-        db.refresh(product)
-        return product
+
+        try:
+            db.commit()
+            db.refresh(product)
+            return product
+        
+        except SQLAlchemyError:
+            db.rollback()
+            raise
 
     def get_all(self, db: Session):
         return db.query(Product).all()

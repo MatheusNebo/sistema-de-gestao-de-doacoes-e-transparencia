@@ -1,14 +1,21 @@
 from sqlalchemy.orm import Session
 from app.models.donor import Donor
+from sqlalchemy.exc import SQLAlchemyError
 
 class DonorRepository:
 
     def create(self, db: Session, data):
         donor = Donor(**data.model_dump())
         db.add(donor)
-        db.commit()
-        db.refresh(donor)
-        return donor
+
+        try:
+            db.commit()
+            db.refresh(donor)
+            return donor
+
+        except SQLAlchemyError:
+            db.rollback()
+            raise
 
     def get_all(self, db: Session):
         return db.query(Donor).all()
