@@ -11,7 +11,7 @@ class Beneficiary(Base):
     cpf = Column(String(14), unique=True, nullable=False)
 
     birth_date = Column(Date)
-    address = Column(Text)
+    address = Column(Text, nullable=False)
     city = Column(String(100))
     telephone = Column(String(20))
 

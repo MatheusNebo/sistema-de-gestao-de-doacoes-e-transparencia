@@ -127,7 +127,7 @@ CREATE TABLE beneficiary (
     name VARCHAR(150) NOT NULL,
     cpf VARCHAR(14) NOT NULL,
     birth_date DATE,
-    address TEXT,
+    address TEXT NOT NULL,
     city VARCHAR(100),
     telephone VARCHAR(20),
 
