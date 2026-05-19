@@ -41,13 +41,10 @@ class DonorCreate(DonorBase):
 
 class DonorUpdate(BaseModel):
     donor_type: Optional[DonorType] = None
-
     name: Optional[str] = Field(None, min_length=2, max_length=150)
     cpf: Optional[str] = Field(None, min_length=11, max_length=14)
-
     company_name: Optional[str] = Field(None, min_length=2, max_length=150)
     cnpj: Optional[str] = Field(None, min_length=14, max_length=18)
-
     email: Optional[EmailStr] = None
     phone: Optional[str] = Field(None, max_length=20)
 

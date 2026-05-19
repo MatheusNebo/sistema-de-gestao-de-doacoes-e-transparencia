@@ -26,6 +26,14 @@ class DonorService:
             raise HTTPException(status_code=404, detail="Doador não encontrado")
         
         self._validate_pf_pj_update(data, current_donor)
+        
+        # converte o schema para dict contendo APENAS o que o usuário preencheu no payload
+        update_data = data.model_dump(exclude_unset=True)
+        
+        async with db.begin():
+            return await self.repository.update(db, donor_id, update_data)
+        
+        self._validate_pf_pj_update(data, current_donor)
         async with db.begin():
             return await self.repository.update(db, donor_id, data)
 
@@ -49,41 +57,42 @@ class DonorService:
                     detail="Pessoa jurídica exige razão social e CNPJ"
                 )
 
-    def _validate_pf_pj_update(self, data, current_donor=None):
-
-        self._validate_immutable_fields(current_donor, data)
-
-        if current_donor and data.donor_type and data.donor_type != current_donor.donor_type:
+    def _validate_pf_pj_update(self, data, current_donor):
+        # bloqueia a mudança explícita de tipo de doador
+        if data.donor_type and data.donor_type != current_donor.donor_type:
             raise HTTPException(
                 status_code=400,
                 detail="Não é permitido alterar o tipo de doador após a criação"
             )
 
-        if data.donor_type is None:
-            return
+        # usa o tipo atual do banco como verdade caso o update não envie o tipo
+        active_type = data.donor_type or current_donor.donor_type
 
-        if data.donor_type == DonorType.PF and data.company_name:
-            raise HTTPException(
-                status_code=400,
-                detail="Pessoa física não deve possuir razão social"
-            )
+        # garante a integridade dos campos com base no tipo ativo do doador
+        if active_type == DonorType.PF:
+            if data.company_name or data.cnpj:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Pessoa física não deve possuir razão social ou CNPJ"
+                )
+        elif active_type == DonorType.PJ:
+            if data.name or data.cpf:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Pessoa jurídica não deve possuir nome pessoal ou CPF"
+                )
 
-        if data.donor_type == DonorType.PJ and data.name:
-            raise HTTPException(
-                status_code=400,
-                detail="Pessoa jurídica não deve possuir nome pessoal"
-            )
-
+        # garante que campos de identificação nacional sejam imutáveis
         if data.cpf and data.cpf != current_donor.cpf:
             raise HTTPException(
                 status_code=400,
                 detail="CPF não pode ser alterado"
-        )
+            )
 
         if data.cnpj and data.cnpj != current_donor.cnpj:
             raise HTTPException(
                 status_code=400,
                 detail="CNPJ não pode ser alterado"
-        )
+            )
 
         
