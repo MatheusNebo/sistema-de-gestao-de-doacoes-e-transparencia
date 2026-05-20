@@ -15,8 +15,9 @@ class ProductService:
         if existing:
             raise HTTPException(status_code=400, detail="Este produto já está cadastrado com esta unidade.")
 
+        product_data = data.model_dump()
         async with db.begin():
-            return await self.repository.create(db, data)
+            return await self.repository.create(db, product_data)
 
     async def list_products(self, db: AsyncSession):
         return await self.repository.get_all(db)
@@ -30,8 +31,9 @@ class ProductService:
         if data.unit:
             data.unit = data.unit.strip().lower()
 
+        update_data = data.model_dump(exclude_unset=True)
         async with db.begin():
-            return await self.repository.update(db, product_id, data)
+            return await self.repository.update(db, product_id, update_data)
 
     async def delete_product(self, db: AsyncSession, product_id: int):
         async with db.begin():

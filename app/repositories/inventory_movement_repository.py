@@ -4,13 +4,8 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
 class InventoryMovementRepository:
-    async def create(self, db: AsyncSession, data):
-        db_movement = InventoryMovement(
-            product_id=data.product_id,
-            movement_type=data.movement_type,
-            quantity=data.quantity,
-            source=data.source
-        )
+    async def create(self, db: AsyncSession, data: dict):
+        db_movement = InventoryMovement(**data)
         db.add(db_movement)
         await db.flush()
         await db.refresh(db_movement)

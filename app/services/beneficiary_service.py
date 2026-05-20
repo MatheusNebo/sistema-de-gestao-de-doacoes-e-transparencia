@@ -8,7 +8,7 @@ class BeneficiaryService:
         self.repository = BeneficiaryRepository()
 
     async def create_beneficiary(self, db: AsyncSession, data: BeneficiaryCreate):
-        # 1. Trava de segurança: Verifica se o CPF já está cadastrado
+        # verifica se o CPF já está cadastrado
         existing_beneficiary = await self.repository.get_by_cpf(db, data.cpf)
         if existing_beneficiary:
             raise HTTPException(
@@ -16,10 +16,10 @@ class BeneficiaryService:
                 detail="Já existe um beneficiário cadastrado com este CPF."
             )
 
-        # 2. Converte o schema do Pydantic para um dicionário
+        # converte o schema do Pydantic para um dicionário
         beneficiary_data = data.model_dump()
 
-        # 3. Salva no banco de dados garantindo a transação
+        # salva no banco de dados garantindo a transação
         async with db.begin():
             return await self.repository.create(db, beneficiary_data)
 
@@ -33,19 +33,19 @@ class BeneficiaryService:
         return beneficiary
 
     async def update_beneficiary(self, db: AsyncSession, beneficiary_id: int, data: BeneficiaryUpdate):
-        # 1. Verifica se existe antes de tentar atualizar
+        # verifica se existe antes de tentar atualizar
         beneficiary = await self.repository.get_by_id(db, beneficiary_id)
         if not beneficiary:
             raise HTTPException(status_code=404, detail="Beneficiário não encontrado.")
 
-        # 2. Extrai APENAS os campos que o usuário enviou na requisição (ignora os Nulos não enviados)
+        # extrai APENAS os campos que o usuário enviou na requisição (ignora os Nulos não enviados)
         update_data = data.model_dump(exclude_unset=True)
 
-        # 3. Se não enviou nada para atualizar, apenas retorna o próprio beneficiário
+        # se não enviou nada para atualizar, apenas retorna o próprio beneficiário
         if not update_data:
             return beneficiary
 
-        # 4. Salva a atualização
+        # salva a atualização
         async with db.begin():
             return await self.repository.update(db, beneficiary_id, update_data)
 

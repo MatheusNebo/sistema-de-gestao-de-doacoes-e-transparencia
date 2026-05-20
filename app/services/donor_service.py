@@ -11,8 +11,9 @@ class DonorService:
 
     async def create_donor(self, db: AsyncSession, data):
         self._validate_pf_pj(data)
+        donor_data = data.model_dump()
         async with db.begin():
-            return await self.repository.create(db, data)
+            return await self.repository.create(db, donor_data)
 
     async def list_donors(self, db: AsyncSession):
         return await self.repository.get_all(db)
@@ -32,10 +33,6 @@ class DonorService:
         
         async with db.begin():
             return await self.repository.update(db, donor_id, update_data)
-        
-        self._validate_pf_pj_update(data, current_donor)
-        async with db.begin():
-            return await self.repository.update(db, donor_id, data)
 
     async def delete_donor(self, db: AsyncSession, donor_id: int):
         async with db.begin():

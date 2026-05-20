@@ -5,13 +5,8 @@ from sqlalchemy.exc import SQLAlchemyError
 
 class InventoryRepository:
 
-    async def create(self, db: AsyncSession, data):
-        if hasattr(data, "model_dump"):
-            inventory_data = data.model_dump()
-        else:
-            inventory_data = data
-
-        inventory = Inventory(**inventory_data)
+    async def create(self, db: AsyncSession, data: dict):
+        inventory = Inventory(**data)
         db.add(inventory)
         await db.flush()
         await db.refresh(inventory)

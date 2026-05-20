@@ -13,13 +13,14 @@ class InventoryService:
 
     async def register_movement(self, db: AsyncSession, movement_data):
         try:
+            movement_dict = movement_data.model_dump()
             async with db.begin():
                 # registra o movimento (Histórico)
-                movement = await self.movement_repository.create(db, movement_data)
+                movement = await self.movement_repository.create(db, movement_dict)
 
-                # lógica de Entrada (Entry)
+                # lógica de entrada (Entry)
                 if movement.movement_type == 'entrada':
-                    # busca lote bloqueando para escrita (Pessimistic Locking)
+                    # busca lote bloqueando para escrita 
                     existing_stock = await self.repository.get_by_product_and_batch(
                         db, movement.product_id, movement_data.batch
                     )
@@ -30,7 +31,7 @@ class InventoryService:
                         await self.repository.update_quantity(db, existing_stock.inventory_id, new_qty)
                     else:
                         # cria novo registro no inventário (novo lote)
-                        await self.repository.create(db, movement_data)
+                        await self.repository.create(db, movement_dict)
 
                 # lógica de Saída ou Perda (Exit/Loss)
                 else:

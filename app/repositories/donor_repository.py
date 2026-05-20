@@ -5,8 +5,8 @@ from sqlalchemy.exc import SQLAlchemyError
 
 class DonorRepository:
 
-    async def create(self, db: AsyncSession, data):
-        donor = Donor(**data.model_dump())
+    async def create(self, db: AsyncSession, data: dict):
+        donor = Donor(**data)
         db.add(donor)
         await db.flush()
         await db.refresh(donor)
@@ -22,9 +22,7 @@ class DonorRepository:
         )
         return result.scalar_one_or_none()
 
-    async def update(self, db: AsyncSession, donor_id: int, data):
-        update_data = data.model_dump(exclude_unset=True)
-    
+    async def update(self, db: AsyncSession, donor_id: int, update_data: dict):
         if not update_data:
             return await self.get_by_id(db, donor_id)
     

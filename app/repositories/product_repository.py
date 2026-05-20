@@ -5,8 +5,8 @@ from sqlalchemy.exc import SQLAlchemyError
 
 class ProductRepository:
 
-    async def create(self, db: AsyncSession, data):
-        product = Product(**data.model_dump())
+    async def create(self, db: AsyncSession, data: dict):
+        product = Product(**data)
         db.add(product)
         await db.flush()
         await db.refresh(product)
@@ -22,13 +22,13 @@ class ProductRepository:
         )
         return result.scalar_one_or_none()
 
-    async def update(self, db: AsyncSession, product_id: int, data):
+    async def update(self, db: AsyncSession, product_id: int, update_data: dict):
         product = await self.get_by_id(db, product_id)
 
         if not product:
             return None
 
-        for key, value in data.model_dump().items():
+        for key, value in update_data.items():
             setattr(product, key, value)
 
         await db.flush()
