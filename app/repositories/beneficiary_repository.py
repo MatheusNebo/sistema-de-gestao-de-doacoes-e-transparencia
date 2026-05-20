@@ -1,16 +1,12 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.beneficiary import Beneficiary
 from sqlalchemy import select
-from sqlalchemy.exc import SQLAlchemyError
 
 class BeneficiaryRepository:
-    async def create(self, db: AsyncSession, data):
-        db_beneficiary = Beneficiary(
-            name=data.name,
-            email=data.email,
-            phone=data.phone,
-            address=data.address
-        )
+    
+    async def create(self, db: AsyncSession, data: dict):
+        # recebe um dicionário (gerado pelo model_dump do Service) e cria a entidade
+        db_beneficiary = Beneficiary(**data) # o ** desempacota o dicionário automaticamente
         db.add(db_beneficiary)
         await db.flush()
         await db.refresh(db_beneficiary)
@@ -22,19 +18,26 @@ class BeneficiaryRepository:
         )
         return result.scalar_one_or_none()
     
+    async def get_by_cpf(self, db: AsyncSession, cpf: str):
+        # busca por CPF para evitar duplicidades no cadastro
+        result = await db.execute(
+            select(Beneficiary).where(Beneficiary.cpf == cpf)
+        )
+        return result.scalar_one_or_none()
+    
     async def get_all(self, db: AsyncSession):
         result = await db.execute(select(Beneficiary))
         return result.scalars().all()
     
-    async def update(self, db: AsyncSession, beneficiary_id: int, data):
+    async def update(self, db: AsyncSession, beneficiary_id: int, data: dict):
+        # atualiza dinamicamente apenas as colunas que vieram no dicionário
         beneficiary = await self.get_by_id(db, beneficiary_id)
         if not beneficiary:
             return None
         
-        beneficiary.name = data.name
-        beneficiary.email = data.email
-        beneficiary.phone = data.phone
-        beneficiary.address = data.address
+        # dinâmico: para cada chave/valor no dict, atualiza o atributo correspondente
+        for key, value in data.items():
+            setattr(beneficiary, key, value)
 
         await db.flush()
         await db.refresh(beneficiary)
@@ -48,5 +51,3 @@ class BeneficiaryRepository:
         await db.delete(beneficiary)
         await db.flush()
         return beneficiary
-    
-    
