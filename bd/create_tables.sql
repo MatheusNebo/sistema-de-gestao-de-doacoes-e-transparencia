@@ -228,7 +228,22 @@ CREATE TABLE inventory_movement (
     CONSTRAINT fk_inventory_movement_product
         FOREIGN KEY (product_id)
         REFERENCES product(product_id)
-        ON DELETE RESTRICT,
+        ON DELETE SET NULL, --atualização: permitir NULL para manter histórico mesmo se produto for removido
+
+    CONSTRAINT fk_inventory_movement_donor
+        FOREIGN KEY (donor_id)
+        REFERENCES donor(donor_id)
+        ON DELETE SET NULL,
+
+    CONSTRAINT fk_inventory_movement_beneficiary
+        FOREIGN KEY (beneficiary_id)
+        REFERENCES beneficiary(beneficiary_id)
+        ON DELETE SET NULL,
+
+    CONSTRAINT fk_inventory_movement_system_user
+        FOREIGN KEY (user_id)
+        REFERENCES system_user(user_id)
+        ON DELETE SET NULL,
 
     CONSTRAINT chk_movement_type
         CHECK (movement_type IN ('entrada','saida','perda')),
