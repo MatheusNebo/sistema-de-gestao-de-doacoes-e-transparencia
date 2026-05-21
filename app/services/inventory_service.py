@@ -4,6 +4,8 @@ from fastapi import HTTPException
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from decimal import Decimal
+from app.enums import MovementType, MovementSource
+from app.exceptions import DomainError
 
 class InventoryService:
 
@@ -14,19 +16,26 @@ class InventoryService:
     async def register_movement(self, db: AsyncSession, movement_data):
         try:
             movement_dict = movement_data.model_dump()
+
+            # normaliza strings para enums quando fornecidos como texto
+            if movement_dict.get("movement_type"):
+                movement_dict["movement_type"] = MovementType(movement_dict["movement_type"])
+            if movement_dict.get("source"):
+                movement_dict["source"] = MovementSource(movement_dict["source"])
+
             async with db.begin():
                 # registra o movimento (Histórico)
                 movement = await self.movement_repository.create(db, movement_dict)
 
                 # lógica de entrada (Entry)
-                if movement.movement_type == 'entrada':
+                if movement.movement_type == MovementType.ENTRADA:
                     # busca lote bloqueando para escrita 
                     existing_stock = await self.repository.get_by_product_and_batch(
                         db, movement.product_id, movement_data.batch
                     )
-                    
+
                     if existing_stock:
-                        # soma as quantidades convertendo para Decimal para segurança (padrão json em float pode causar erros)
+                        # soma as quantidades convertendo para Decimal para segurança
                         new_qty = Decimal(str(existing_stock.quantity)) + Decimal(str(movement.quantity))
                         await self.repository.update_quantity(db, existing_stock.inventory_id, new_qty)
                     else:
@@ -37,21 +46,19 @@ class InventoryService:
                 else:
                     total_stock = await self.repository.get_total_quantity(db, movement.product_id)
                     if total_stock < movement.quantity:
-                        # se não houver saldo, o erro interrompe a transação
-                        raise HTTPException(
-                            status_code=400, 
-                            detail=f"Saldo insuficiente. Disponível: {total_stock}"
-                        )
-                    
+                        # lança erro de domínio para o handler global
+                        raise DomainError(f"Saldo insuficiente. Disponível: {total_stock}")
+
                     # subtrai usando a lógica FIFO
                     await self.repository.subtract_quantity(db, movement.product_id, movement.quantity)
 
                 return movement
 
-        except Exception as e:
-            if isinstance(e, HTTPException):
-                raise e
-            raise HTTPException(status_code=500, detail=f"Erro crítico de inventário: {str(e)}")
+        except DomainError:
+            raise
+        except Exception:
+            # Erro genérico — o handler global converte em resposta 500 sem expor detalhes
+            raise
 
     async def list_inventories(self, db: AsyncSession):
         return await self.repository.get_all(db)

@@ -1,4 +1,4 @@
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from app.enums import DonorType
 from app.repositories.donor_repository import DonorRepository
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,7 +24,7 @@ class DonorService:
     async def update_donor(self, db: AsyncSession, donor_id: int, data):
         current_donor = await self.repository.get_by_id(db, donor_id)
         if not current_donor:
-            raise HTTPException(status_code=404, detail="Doador não encontrado")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Doador não encontrado")
         
         self._validate_pf_pj_update(data, current_donor)
         

@@ -23,7 +23,8 @@ class InventoryRepository:
         return result.scalar_one_or_none()
     
     async def update(self, db: AsyncSession, inventory_id: int, data):
-        update_data = data.model_dump(exclude_unset=True)
+        # agora espera que o service passe um dict com os campos a atualizar
+        update_data: dict = data
 
         if not update_data:
             return await self.get_by_id(db, inventory_id)
@@ -31,7 +32,7 @@ class InventoryRepository:
         inventory = await self.get_by_id(db, inventory_id)
         if not inventory:
             return None
-            
+
         for key, value in update_data.items():
             setattr(inventory, key, value)
 

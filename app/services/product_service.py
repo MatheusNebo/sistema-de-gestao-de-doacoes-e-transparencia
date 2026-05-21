@@ -1,5 +1,5 @@
 from app.repositories.product_repository import ProductRepository
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 class ProductService:
@@ -13,7 +13,7 @@ class ProductService:
 
         existing = await self.repository.get_by_name_and_unit(db, data.name, data.unit)
         if existing:
-            raise HTTPException(status_code=400, detail="Este produto já está cadastrado com esta unidade.")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Este produto já está cadastrado com esta unidade.")
 
         product_data = data.model_dump()
         async with db.begin():
