@@ -181,7 +181,8 @@ CREATE TABLE distribution_item (
     CONSTRAINT fk_distribution_item_distribution
         FOREIGN KEY (distribution_id)
         REFERENCES distribution(distribution_id)
-        ON DELETE CASCADE,
+        ON DELETE CASCADE, -- caso seja apagado esse registro, apaga-se tambem a distribuição, mas não o produto, 
+                           -- para manter histórico mesmo se produto for removido
 
     CONSTRAINT fk_distribution_item_product
         FOREIGN KEY (product_id)
@@ -222,6 +223,9 @@ CREATE TABLE inventory_movement (
     quantity NUMERIC(10,2) NOT NULL,
     movement_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     source VARCHAR(50),
+    donor_id INT,
+    beneficiary_id INT,
+    user_id INT,
 
     CONSTRAINT pk_inventory_movement PRIMARY KEY (inventory_movement_id),
 
