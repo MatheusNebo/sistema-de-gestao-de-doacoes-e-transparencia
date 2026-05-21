@@ -18,4 +18,4 @@ class Donation(Base):
     )
 
     donor = relationship("Donor")
-    items = relationship("DonationItem", back_populates="donation")
+    items = relationship("DonationItem", back_populates="donation", cascade="all, delete-orphan")
