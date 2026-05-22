@@ -11,4 +11,4 @@ class Distribution(Base):
     distribution_date = Column(Date, nullable=False)
 
     beneficiary = relationship("Beneficiary")
-    items = relationship("DistributionItem", back_populates="distribution")
+    items = relationship("DistributionItem", back_populates="distribution", cascade="all, delete-orphan")
