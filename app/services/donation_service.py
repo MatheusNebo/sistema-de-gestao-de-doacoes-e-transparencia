@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.repositories.donation_repository import DonationRepository
 from app.repositories.donor_repository import DonorRepository
 from app.repositories.product_repository import ProductRepository
-from app.schemas.donation_schema import DonationCreate, DonationUpdate
+from app.schemas.donation_schema import DonationCreate
 from app.enums import DonationType
 
 # IMPORTAMOS O INVENTORY SERVICE E O SCHEMA DO MOVIMENTO

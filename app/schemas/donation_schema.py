@@ -5,7 +5,6 @@ from datetime import date
 from decimal import Decimal
 from app.enums import DonationType
 
-
 class DonationItemBase(BaseModel):
     product_id: int = Field(..., gt=0)
     quantity: Decimal = Field(..., gt=0)
