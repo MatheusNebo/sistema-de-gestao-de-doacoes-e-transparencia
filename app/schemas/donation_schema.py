@@ -10,6 +10,9 @@ class DonationItemBase(BaseModel):
     product_id: int = Field(..., gt=0)
     quantity: Decimal = Field(..., gt=0)
 
+    batch: Optional[str] = Field(None, max_length=50)
+    expiration_date: Optional[date] = None
+
     @field_validator("quantity", mode="before")
     @classmethod
     def normalize_quantity(cls, value):
