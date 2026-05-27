@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func, select
 from app.models.inventory import Inventory
 from sqlalchemy.exc import SQLAlchemyError
+from decimal import Decimal
 
 class InventoryRepository:
 
@@ -75,21 +76,21 @@ class InventoryRepository:
         await db.flush()
         return True
 
-    async def subtract_quantity(self, db: AsyncSession, product_id: int, quantity: float):
-        # subtrai quantidade do inventário usando FIFO (primeiro lote a vencer primeiro)
+    async def subtract_quantity(self, db: AsyncSession, product_id: int, quantity: Decimal):
         result = await db.execute(
             select(Inventory).where(
-                Inventory.product_id == product_id
-            ).order_by(Inventory.expiration_date).with_for_update()  # bloqueia os registros para evitar saidas concorrentes 
+                Inventory.product_id == product_id,
+                Inventory.quantity > 0  # ignora lotes que já estejam zerados por segurança
+            ).order_by(Inventory.expiration_date).with_for_update() #ordena por data de validade para aplicar FIFO e 
+                                                                    # bloqueia os registros para evitar concorrência
         )
         inventories = result.scalars().all()
 
         if not inventories:
-            raise ValueError(f"Nenhum inventário encontrado para produto {product_id}")
+            raise ValueError(f"Nenhum saldo em estoque disponível para o produto {product_id}")
 
         remaining_to_subtract = quantity
 
-        # percorre lotes na ordem FIFO e subtrai
         for inventory in inventories:
             if remaining_to_subtract <= 0:
                 break
@@ -97,9 +98,18 @@ class InventoryRepository:
             if inventory.quantity >= remaining_to_subtract:
                 inventory.quantity -= remaining_to_subtract
                 remaining_to_subtract = 0
+                
+                # se o lote exato zerou, removemos para limpar a tabela
+                if inventory.quantity == 0:
+                    await db.delete(inventory)
             else:
                 remaining_to_subtract -= inventory.quantity
-                inventory.quantity = 0
+                # o lote não tinha o suficiente, sugamos tudo o que ele tinha e o deletamos
+                await db.delete(inventory)
+
+        # se saímos do loop e ainda sobrou quantidade para subtrair, significa que não havia estoque suficiente geral
+        if remaining_to_subtract > 0:
+            raise ValueError(f"Estoque insuficiente para o produto {product_id}. Faltaram {remaining_to_subtract} unidades.")
 
         await db.flush()
         return True
