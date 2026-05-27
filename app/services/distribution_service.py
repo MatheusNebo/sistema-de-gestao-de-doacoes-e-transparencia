@@ -1,16 +1,21 @@
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.distribution import Distribution
 from app.repositories.distribution_repository import DistributionRepository
 from app.repositories.beneficiary_repository import BeneficiaryRepository
 from app.repositories.product_repository import ProductRepository
 from app.schemas.distribution_schema import DistributionCreate
+from app.services.inventory_service import InventoryService
+from app.schemas.inventory_movement_schema import InventoryMovementCreate
+from app.exceptions import DomainError
 
 class DistributionService:
     def __init__(self):
+        # instancia os repositórios necessários
         self.repository = DistributionRepository()
-        self.beneficiary_repository = BeneficiaryRepository() # Você precisará disso
+        self.beneficiary_repository = BeneficiaryRepository()
         self.product_repository = ProductRepository()
+        self.inventory_service = InventoryService()
 
     async def create_distribution(self, db: AsyncSession, data: DistributionCreate):
         # valida se o Beneficiário existe
@@ -33,7 +38,38 @@ class DistributionService:
                 detail=f"Produtos não encontrados: {list(missing_ids)}"
             )
 
-        # futuramente aqui: Validar se TEM ESTOQUE antes de distribuir (InventoryService)
+        try:
+            # transação principal 
+            async with db.begin():
+                # cria a distribuição e os DistributionItems no banco
+                distribution = await self.repository.create(db, distribution_data)
 
-        async with db.begin():
-            return await self.repository.create(db, distribution_data)
+                # para cada item distribuído, manda a ordem de saída para o estoque
+                for item in items:
+                    movement_data = InventoryMovementCreate(
+                        product_id=item["product_id"],
+                        quantity=item["quantity"],
+                        movement_type="saida",        # <-- saída de estoque
+                        source="distribuicao",        # <-- origem: distribuição
+                        beneficiary_id=distribution.beneficiary_id # <-- vínculo histórico
+                    )
+
+                    # o InventoryService vai validar o saldo e rodar o FIFO de lotes automaticamente.
+                    # como é Saída, não passamos batch e nem expiration_date (o FIFO descobre sozinho).
+                    await self.inventory_service.register_movement(
+                        db=db,
+                        movement_data=movement_data
+                    )
+
+                return distribution
+
+        except DomainError as e:
+            # captura o erro de falta de estoque lançado pelo InventoryService
+            # e converte em um erro HTTP 400 amigável para o front-end
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e)
+            )
+        except Exception as e:
+            # repassa outros erros genéricos para o handler global 500
+            raise e
