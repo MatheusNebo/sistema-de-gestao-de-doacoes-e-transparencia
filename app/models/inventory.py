@@ -16,6 +16,6 @@ class Inventory(Base):
     entry_date = Column(Date, server_default=func.current_date(), nullable=False)
 
     __table_args__ = (
-        CheckConstraint("quantity >= 0", name="chk_inventory_quantity"),
+        CheckConstraint("quantity > 0", name="chk_inventory_quantity"),
         CheckConstraint("expiration_date >= entry_date", name="chk_inventory_expiration"),
     )
