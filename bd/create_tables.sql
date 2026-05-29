@@ -258,3 +258,15 @@ CREATE TABLE inventory_movement (
     CONSTRAINT chk_movement_source
         CHECK (source IN ('doacao','distribuicao','ajuste'))
 );
+
+CREATE TYPE donortype AS ENUM ('PF', 'PJ');
+
+CREATE TYPE donationtype AS ENUM ('food', 'financial');
+
+CREATE TYPE unittype AS ENUM ('kg', 'g', 'un', 'l', 'ml', 'fardo', 'caixa');
+
+CREATE TYPE userrole AS ENUM ('admin', 'voluntario');
+
+CREATE TYPE movementtype AS ENUM ('entrada', 'saida', 'perda');
+
+CREATE TYPE movementsource AS ENUM ('doacao', 'distribuicao', 'ajuste');

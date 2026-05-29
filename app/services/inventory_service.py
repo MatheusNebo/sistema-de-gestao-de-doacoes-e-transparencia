@@ -57,7 +57,7 @@ class InventoryService:
         except DomainError:
             raise
         except Exception:
-            # Erro genérico — o handler global converte em resposta 500 sem expor detalhes
+            # erro genérico — o handler global converte em resposta 500 sem expor detalhes
             raise
 
     async def list_inventories(self, db: AsyncSession):
