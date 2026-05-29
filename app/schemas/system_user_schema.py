@@ -1,17 +1,13 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 from datetime import datetime
-from enum import Enum
-
-class UserRole(str, Enum):
-    ADMIN = "admin"
-    VOLUNTARIO = "voluntario"
+from app.enums import UserRole
 
 class UserBase(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     email: EmailStr
     full_name: str
-    role: UserRole = UserRole.VOLUNTARIO
+    role: UserRole = UserRole.admin
     is_active: bool = True
 
 class UserCreate(UserBase):
