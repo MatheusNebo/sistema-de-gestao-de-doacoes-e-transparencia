@@ -301,6 +301,7 @@ CREATE TABLE audit_log (
         CHECK (entity_type IN ('beneficiary', 'donor', 'product', 'donation', 'distribution', 'inventory'))
 );
 
+-- criação de índices para otimizar consultas de auditoria
 CREATE INDEX idx_audit_log_entity ON audit_log(entity_type, entity_id);
 CREATE INDEX idx_audit_log_user ON audit_log(user_id);
 CREATE INDEX idx_audit_log_timestamp ON audit_log(created_at DESC);

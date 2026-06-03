@@ -2,10 +2,12 @@ from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.repositories.beneficiary_repository import BeneficiaryRepository
 from app.schemas.beneficiary_schema import BeneficiaryCreate, BeneficiaryUpdate
+from app.services.audit_service import AuditService
 
 class BeneficiaryService:
     def __init__(self):
         self.repository = BeneficiaryRepository()
+        self.audit_service = AuditService()
 
     async def create_beneficiary(self, db: AsyncSession, data: BeneficiaryCreate):
         # verifica se o CPF já está cadastrado
@@ -21,7 +23,17 @@ class BeneficiaryService:
 
         # salva no banco de dados garantindo a transação
         async with db.begin():
-            return await self.repository.create(db, beneficiary_data)
+            beneficiary = await self.repository.create(db, beneficiary_data)
+            
+            # registra na auditoria
+            await self.audit_service.log_create(
+                db,
+                entity_type="beneficiary",
+                entity_id=beneficiary.beneficiary_id,
+                new_value=beneficiary_data
+            )
+            
+            return beneficiary
 
     async def list_beneficiaries(self, db: AsyncSession):
         return await self.repository.get_all(db)
@@ -45,14 +57,61 @@ class BeneficiaryService:
         if not update_data:
             return beneficiary
 
+        # guarda valor antigo para auditoria
+        old_value = {
+            "name": beneficiary.name,
+            "email": beneficiary.email,
+            "birth_date": beneficiary.birth_date.isoformat() if beneficiary.birth_date else None,
+            "address": beneficiary.address,
+            "city": beneficiary.city,
+            "telephone": beneficiary.telephone,
+            "household_size": beneficiary.household_size,
+            "family_income": float(beneficiary.family_income) if beneficiary.family_income else None,
+        }
+
         # salva a atualização
         async with db.begin():
-            return await self.repository.update(db, beneficiary_id, update_data)
+            updated = await self.repository.update(db, beneficiary_id, update_data)
+            
+            # registra na auditoria
+            await self.audit_service.log_update(
+                db,
+                entity_type="beneficiary",
+                entity_id=beneficiary_id,
+                old_value=old_value,
+                new_value=update_data
+            )
+            
+            return updated
 
     async def delete_beneficiary(self, db: AsyncSession, beneficiary_id: int):
         beneficiary = await self.repository.get_by_id(db, beneficiary_id)
         if not beneficiary:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Beneficiário não encontrado.")
 
+        # guarda dados para auditoria
+        old_value = {
+            "beneficiary_id": beneficiary.beneficiary_id,
+            "name": beneficiary.name,
+            "cpf": beneficiary.cpf,
+            "email": beneficiary.email,
+            "birth_date": beneficiary.birth_date.isoformat() if beneficiary.birth_date else None,
+            "address": beneficiary.address,
+            "city": beneficiary.city,
+            "telephone": beneficiary.telephone,
+            "household_size": beneficiary.household_size,
+            "family_income": float(beneficiary.family_income) if beneficiary.family_income else None,
+        }
+
         async with db.begin():
-            return await self.repository.delete(db, beneficiary_id)
+            await self.repository.delete(db, beneficiary_id)
+            
+            # registra na auditoria
+            await self.audit_service.log_delete(
+                db,
+                entity_type="beneficiary",
+                entity_id=beneficiary_id,
+                old_value=old_value
+            )
+            
+            return beneficiary

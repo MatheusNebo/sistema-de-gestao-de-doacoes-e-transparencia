@@ -1,6 +1,7 @@
 from fastapi import HTTPException, status
 from app.enums import DonorType
 from app.repositories.donor_repository import DonorRepository
+from app.services.audit_service import AuditService
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -8,12 +9,23 @@ class DonorService:
 
     def __init__(self):
         self.repository = DonorRepository()
+        self.audit_service = AuditService()
 
     async def create_donor(self, db: AsyncSession, data):
         self._validate_pf_pj(data)
         donor_data = data.model_dump()
         async with db.begin():
-            return await self.repository.create(db, donor_data)
+            donor = await self.repository.create(db, donor_data)
+            
+            # registra na auditoria
+            await self.audit_service.log_create(
+                db,
+                entity_type="donor",
+                entity_id=donor.donor_id,
+                new_value=donor_data
+            )
+            
+            return donor
 
     async def list_donors(self, db: AsyncSession):
         return await self.repository.get_all(db)
@@ -31,12 +43,60 @@ class DonorService:
         # converte o schema para dict contendo APENAS o que o usuário preencheu no payload
         update_data = data.model_dump(exclude_unset=True)
         
+        # guarda valor antigo para auditoria
+        old_value = {
+            "donor_type": current_donor.donor_type.value,
+            "name": current_donor.name,
+            "cpf": current_donor.cpf,
+            "company_name": current_donor.company_name,
+            "cnpj": current_donor.cnpj,
+            "email": current_donor.email,
+            "phone": current_donor.phone,
+        }
+        
         async with db.begin():
-            return await self.repository.update(db, donor_id, update_data)
+            updated = await self.repository.update(db, donor_id, update_data)
+            
+            # registra na auditoria
+            await self.audit_service.log_update(
+                db,
+                entity_type="donor",
+                entity_id=donor_id,
+                old_value=old_value,
+                new_value=update_data
+            )
+            
+            return updated
 
     async def delete_donor(self, db: AsyncSession, donor_id: int):
+        donor = await self.repository.get_by_id(db, donor_id)
+        if not donor:
+            return None
+            
+        # guarda dados para auditoria
+        old_value = {
+            "donor_id": donor.donor_id,
+            "donor_type": donor.donor_type.value,
+            "name": donor.name,
+            "cpf": donor.cpf,
+            "company_name": donor.company_name,
+            "cnpj": donor.cnpj,
+            "email": donor.email,
+            "phone": donor.phone,
+        }
+        
         async with db.begin():
-            return await self.repository.delete(db, donor_id)
+            await self.repository.delete(db, donor_id)
+            
+            # registra na auditoria
+            await self.audit_service.log_delete(
+                db,
+                entity_type="donor",
+                entity_id=donor_id,
+                old_value=old_value
+            )
+            
+            return donor
 
 # validações específicas para doadores PF e PJ (não precisam de async por não executarem operações de banco)
     def _validate_pf_pj(self, data):
