@@ -5,6 +5,7 @@ touc
 venv/
 .venv
 .vscode/
+.pytest_cache
 
 *.log
 .DS_Store

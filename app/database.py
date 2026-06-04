@@ -5,7 +5,7 @@ import os
 # URL de conexão com o banco (com asyncpg driver)
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql+asyncpg://postgres:postgres@localhost:5432/sistema_gestao_transparencia_doacoes"
+    "postgresql+asyncpg://postgres:senha@localhost:5432/nome_do_banco"
 )
 
 # cria o engine assíncrono
