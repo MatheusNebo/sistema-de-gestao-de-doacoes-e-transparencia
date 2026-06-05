@@ -1,8 +1,9 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base
 import os
+from dotenv import load_dotenv
 
-# URL de conexão com o banco (com asyncpg driver)
+load_dotenv()  # carrega as variáveis de ambiente do arquivo .env
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
     "postgresql+asyncpg://postgres:senha@localhost:5432/nome_do_banco"
