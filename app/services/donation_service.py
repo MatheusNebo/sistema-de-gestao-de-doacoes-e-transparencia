@@ -96,28 +96,25 @@ class DonationService:
         if not donation:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Doação não encontrada")
 
-        async with db.begin():
-            # reverte o estoque caso a doação tenha itens
-            # assumindo que donation.items traz a lista populada pelo SQLAlchemy (relationship)
-            if donation.items:
-                for item in donation.items:
-                    # monta um movimento de SAÍDA para cancelar a entrada original
-                    movement_data = InventoryMovementCreate(
-                        product_id=item.product_id,
-                        quantity=item.quantity,
-                        movement_type="saida",
-                        source="ajuste", # 'ajuste' indica que é uma correção do sistema, não uma distribuição normal
-                        donor_id=donation.donor_id
-                    )
+        if donation.items:
+            for item in donation.items:
+                # monta um movimento de SAÍDA para cancelar a entrada original
+                movement_data = InventoryMovementCreate(
+                    product_id=item.product_id,
+                    quantity=item.quantity,
+                    movement_type="saida",
+                    source="ajuste", # 'ajuste' indica que é uma correção do sistema, não uma distribuição normal
+                    donor_id=donation.donor_id
+                )
 
-                    # chama o InventoryService para processar a baixa.
-                    # vai automaticamente usar a lógica FIFO para remover os itens.
-                    await self.inventory_service.register_movement(
-                        db=db,
-                        movement_data=movement_data
-                    )
+                # chama o InventoryService para processar a baixa.
+                # vai automaticamente usar a lógica FIFO para remover os itens.
+                await self.inventory_service.register_movement(
+                    db=db,
+                    movement_data=movement_data
+                )
 
-            # após garantir que o estoque foi revertido, apagamos a doação do banco
-            await self.repository.delete(db, donation_id)
+        # após garantir que o estoque foi revertido, apagamos a doação do banco
+        await self.repository.delete(db, donation_id)
             
-            return donation
+        return donation

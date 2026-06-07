@@ -23,42 +23,42 @@ class InventoryService:
             if movement_dict.get("source"):
                 movement_dict["source"] = MovementSource(movement_dict["source"])
 
-            async with db.begin():
-                # registra o movimento (Histórico)
-                movement = await self.movement_repository.create(db, movement_dict)
+            
+            # registra o movimento (Histórico)
+            movement = await self.movement_repository.create(db, movement_dict)
 
-                # lógica de entrada (Entry)
-                if movement.movement_type == MovementType.ENTRADA:
-                    # busca lote bloqueando para escrita 
-                    existing_stock = await self.repository.get_by_product_and_batch(
-                        db, movement.product_id, batch
-                    )
+            # lógica de entrada (Entry)
+            if movement.movement_type == MovementType.ENTRADA:
+                # busca lote bloqueando para escrita 
+                existing_stock = await self.repository.get_by_product_and_batch(
+                    db, movement.product_id, batch
+                )
 
-                    if existing_stock:
-                        # soma as quantidades convertendo para Decimal para segurança
-                        new_qty = Decimal(str(existing_stock.quantity)) + Decimal(str(movement.quantity))
-                        await self.repository.update_quantity(db, existing_stock.inventory_id, new_qty)
-                    else:
-                        # cria novo registro no inventário (novo lote)
-                        inventory_data = {
-                            "product_id": movement.product_id,
-                            "quantity": movement.quantity,
-                            "batch": batch,
-                            "expiration_date": expiration_date
-                        }
-                        await self.repository.create(db, inventory_data)
+                if existing_stock:
+                    # soma as quantidades convertendo para Decimal para segurança
+                    new_qty = Decimal(str(existing_stock.quantity)) + Decimal(str(movement.quantity))
+                    await self.repository.update_quantity(db, existing_stock.inventory_id, new_qty)
+                else:
+                    # cria novo registro no inventário (novo lote)
+                    inventory_data = {
+                        "product_id": movement.product_id,
+                        "quantity": movement.quantity,
+                        "batch": batch,
+                        "expiration_date": expiration_date
+                    }
+                    await self.repository.create(db, inventory_data)
 
                 # lógica de Saída ou Perda (Exit/Loss)
-                else:
-                    total_stock = await self.repository.get_total_quantity(db, movement.product_id)
-                    if total_stock < movement.quantity:
-                        # lança erro de domínio para o handler global
-                        raise DomainError(f"Saldo insuficiente. Disponível: {total_stock}")
+            else:
+                total_stock = await self.repository.get_total_quantity(db, movement.product_id)
+                if total_stock < movement.quantity:
+                    # lança erro de domínio para o handler global
+                    raise DomainError(f"Saldo insuficiente. Disponível: {total_stock}")
 
-                    # subtrai usando a lógica FIFO
-                    await self.repository.subtract_quantity(db, movement.product_id, movement.quantity)
+                # subtrai usando a lógica FIFO
+                await self.repository.subtract_quantity(db, movement.product_id, movement.quantity)
 
-                return movement
+            return movement
 
         except DomainError:
             raise

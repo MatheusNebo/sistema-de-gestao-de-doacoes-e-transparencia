@@ -15,8 +15,10 @@ class InventoryMovement(Base):
     quantity = Column(Numeric(10,2), nullable=False)
     movement_date = Column(DateTime, server_default=func.now(), nullable=False)
     source = Column(SAEnum(MovementSource))
+    donor_id = Column(Integer, ForeignKey("donor.donor_id"), nullable=True)
+    beneficiary_id = Column(Integer, ForeignKey("beneficiary.beneficiary_id"), nullable=True)
+    user_id = Column(Integer, ForeignKey("system_user.user_id"), nullable=True)
 
     __table_args__ = (
-        # quantity check remains
-        # Note: movement_type and source are stored as Enums now
+        
     )
