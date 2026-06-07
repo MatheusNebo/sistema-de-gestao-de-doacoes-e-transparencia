@@ -4,10 +4,7 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()  # carrega as variáveis de ambiente do arquivo .env
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql+asyncpg://postgres:senha@localhost:5432/nome_do_banco"
-)
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 # cria o engine assíncrono
 engine = create_async_engine(

@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.repositories.beneficiary_repository import BeneficiaryRepository
 from app.schemas.beneficiary_schema import BeneficiaryCreate, BeneficiaryUpdate
 from app.services.audit_service import AuditService
+from fastapi.encoders import jsonable_encoder
 
 class BeneficiaryService:
     def __init__(self):
@@ -18,22 +19,26 @@ class BeneficiaryService:
                 detail="Já existe um beneficiário cadastrado com este CPF."
             )
 
-        # converte o schema do Pydantic para um dicionário
+                # mantém os dados originais (com objetos datetime.date que o SQLAlchemy precisa)
         beneficiary_data = data.model_dump()
 
-        # salva no banco de dados garantindo a transação
-        async with db.begin():
-            beneficiary = await self.repository.create(db, beneficiary_data)
-            
-            # registra na auditoria
-            await self.audit_service.log_create(
-                db,
-                entity_type="beneficiary",
-                entity_id=beneficiary.beneficiary_id,
-                new_value=beneficiary_data
-            )
-            
-            return beneficiary
+        # cria o beneficiário no banco primeiro usando os dados nativos
+        beneficiary = await self.repository.create(db, beneficiary_data)
+
+        # transforma em formato amigável para JSON EXCLUSIVAMENTE para a auditoria
+        audit_data = jsonable_encoder(beneficiary_data)
+
+        # registra na auditoria usando o 'audit_data' convertido
+        await self.audit_service.log_create(
+            db,
+            entity_type="beneficiary",
+            entity_id=beneficiary.beneficiary_id, 
+            new_value=audit_data
+        )
+
+        # salva tudo de vez no banco
+        await db.commit()
+        return beneficiary
 
     async def list_beneficiaries(self, db: AsyncSession):
         return await self.repository.get_all(db)

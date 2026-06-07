@@ -16,7 +16,7 @@ class DonationService:
         self.repository = DonationRepository()
         self.donor_repository = DonorRepository()
         self.product_repository = ProductRepository()
-        # Instancia o serviço de estoque
+        # instancia o serviço de estoque
         self.inventory_service = InventoryService() 
 
     async def create_donation(self, db: AsyncSession, data: DonationCreate):
@@ -26,6 +26,11 @@ class DonationService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Doador não encontrado")
 
         donation_data = data.model_dump()
+
+        if "donation_type" in donation_data:
+            val = donation_data["donation_type"]
+            donation_data["donation_type"] = val.value.lower() if hasattr(val, "value") else str(val).lower()
+
         items = donation_data.get("items") or []
 
         # valida Produtos (cláusula IN otimizada)
@@ -51,29 +56,29 @@ class DonationService:
                     )
 
         # transação principal 
-        async with db.begin():
-            # cria a doação e os DonationItems no banco
-            donation = await self.repository.create(db, donation_data)
+        # cria a doação e os DonationItems no banco
+        donation = await self.repository.create(db, donation_data)
 
-            # para cada item doado, manda para o estoque
-            for item in items:
-                movement_data = InventoryMovementCreate(
-                    product_id=item["product_id"],
-                    quantity=item["quantity"],
-                    movement_type="entrada",
-                    source="doacao",
-                    donor_id=donation.donor_id
-                )
+        # para cada item doado, manda para o estoque
+        for item in items:
+            movement_data = InventoryMovementCreate(
+                product_id=item["product_id"],
+                quantity=item["quantity"],
+                movement_type="entrada",
+                source="doacao",
+                donor_id=donation.donor_id
+            )
 
                 # chama o estoque separando o schema de log dos dados físicos
-                await self.inventory_service.register_movement(
-                    db=db,
-                    movement_data=movement_data,
-                    batch=item.get("batch"),
-                    expiration_date=item.get("expiration_date")
-                )
+            await self.inventory_service.register_movement(
+                db=db,
+                movement_data=movement_data,
+                batch=item.get("batch"),
+                expiration_date=item.get("expiration_date")
+            )
 
-            return donation
+        await db.commit()
+        return donation
 
     async def list_donations(self, db: AsyncSession):
         return await self.repository.get_all(db)

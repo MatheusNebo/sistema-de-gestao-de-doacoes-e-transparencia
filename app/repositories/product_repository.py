@@ -1,7 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.product import Product
-from sqlalchemy import select
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.future import select
 
 class ProductRepository:
 
@@ -21,6 +20,12 @@ class ProductRepository:
             select(Product).where(Product.product_id == product_id)
         )
         return result.scalar_one_or_none()
+    
+    async def get_by_ids(self, db: AsyncSession, ids: list[int]):
+    # busca todos os produtos que estão na lista de IDs enviada
+        query = select(Product).where(Product.product_id.in_(ids))
+        result = await db.execute(query)
+        return result.scalars().all()
 
     async def update(self, db: AsyncSession, product_id: int, update_data: dict):
         product = await self.get_by_id(db, product_id)

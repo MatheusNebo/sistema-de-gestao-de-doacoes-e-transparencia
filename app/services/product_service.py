@@ -18,18 +18,18 @@ class ProductService:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Este produto já está cadastrado com esta unidade.")
 
         product_data = data.model_dump()
-        async with db.begin():
-            product = await self.repository.create(db, product_data)
+        
+        product = await self.repository.create(db, product_data)
             
-            # registra na auditoria
-            await self.audit_service.log_create(
-                db,
-                entity_type="product",
-                entity_id=product.product_id,
-                new_value=product_data
-            )
-            
-            return product
+        # registra na auditoria
+        await self.audit_service.log_create(
+            db,
+            entity_type="product",
+            entity_id=product.product_id,
+            new_value=product_data
+        )
+        await db.commit()
+        return product
 
     async def list_products(self, db: AsyncSession):
         return await self.repository.get_all(db)
