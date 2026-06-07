@@ -10,7 +10,7 @@ class Donation(Base):
     donor_id = Column(Integer, ForeignKey("donor.donor_id"), nullable=False)
 
     donation_date = Column(Date, nullable=False)
-    donation_type = Column(Enum(DonationType), nullable=False)
+    donation_type = Column(Enum(DonationType, native_enum=True, values_callable=lambda x: [e.value for e in x]), nullable=False)
     total_value = Column(Numeric(10,2))
 
     __table_args__ = (

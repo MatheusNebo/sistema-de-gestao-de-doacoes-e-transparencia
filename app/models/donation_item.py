@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Numeric, ForeignKey, CheckConstraint
+from sqlalchemy import Column, Integer, String, Date, Numeric, ForeignKey, CheckConstraint
 from sqlalchemy.orm import relationship
 from app.database import Base
 
@@ -11,6 +11,8 @@ class DonationItem(Base):
     product_id = Column(Integer, ForeignKey("product.product_id"), nullable=False)
 
     quantity = Column(Numeric(10,2), nullable=False)
+    batch = Column(String(50))
+    expiration_date = Column(Date)
 
     __table_args__ = (
         CheckConstraint("quantity > 0", name="chk_donation_item_quantity"),
